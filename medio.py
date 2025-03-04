@@ -109,6 +109,10 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                 await asyncio.sleep(random.uniform(5, 10))
                 product_soup = BeautifulSoup(driver.page_source, 'html.parser')
                 product_image_div = product_soup.find('div', class_='d-none d-md-flex d-lg-flex')
+                images = [img.get('src') for img in product_image_div.find_all('img')] if product_image_div else []
+                if len(images) == 0:
+                    for img in product_image_div.find_all('img'):
+                        images.append(img.get('src'))
                 product_info_div = product_soup.find('table')
                 medicine_info = {}
                 if product_info_div != None:
@@ -181,7 +185,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                 product = {
                     "pharmacy_name": pharmacy_name,
                     "medicine_name": medicine_name,
-                    "images": [img.get('src') for img in product_image_div.find_all('img')] if product_image_div else [],
+                    "images": images,
                     "medicine_info": medicine_info,
                     "medicine_description": str(product_soup.find('div', class_='col-sm-12 entry-content py-0')),
                     "price_package": price_package,
