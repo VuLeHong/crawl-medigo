@@ -20,7 +20,7 @@ def init_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--log-level=1")
-    service = Service()  # No need to specify the path
+    service = Service(executable_path='/usr/local/bin/chromedriver')  # No need to specify the path
     return webdriver.Chrome(service=service, options=options)
 
 # Function to clean text
