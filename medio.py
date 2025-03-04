@@ -35,6 +35,23 @@ def clean_string(text):
     text = re.sub(r' +', ' ', text)
     return "\n".join(line.strip() for line in text.split("\n")).strip()
 
+def add_error_product( pharmacy_name, medicine_name, error):
+    try:
+        with open("medigo_error_product.json", "r", encoding="utf-8") as f:
+            error_products =  json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        error_products = []
+    
+    error_products.append({
+        "pharmacy_name": pharmacy_name,
+        "medicine_name": medicine_name,
+        "error": error
+    })
+    
+    with open("medigo_error_product.json", "w", encoding="utf-8") as f:
+        json.dump(error_products, f, ensure_ascii=False, indent=4)
+    
+
 # Load existing product data
 def load_existing_products():
     try:
@@ -181,6 +198,10 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                                 star_number = star.find('b').text
                                 star_rating[str(s)+' star'] = star_number
                                 s -= 1
+                if images == []:
+                    add_error_product(pharmacy_name, medicine_name, "No images")
+                    print(f"Error scraping {pharmacy_name}: No images")
+                    continue
                 # Extract product information
                 product = {
                     "pharmacy_name": pharmacy_name,
@@ -201,7 +222,9 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                 print('-------------------------------------------------')
 
     except Exception as e:
+        add_error_product(pharmacy_name, medicine_name, str(e))
         print(f"Error scraping {pharmacy_name}: {e}")
+        
     finally:
         driver.quit()
     return scraped_products
@@ -222,6 +245,7 @@ async def main():
     # Step 2: Scrape product details in batches of 3 pharmacies
     print("Scraping pharmacy products in batches of 10...")
 
+    error_products = []
     batch_size = 10
     for i in range(0, len(pharmacy_list), batch_size):
         batch = pharmacy_list[i:i + batch_size]
