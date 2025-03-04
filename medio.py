@@ -18,6 +18,7 @@ import os
 # Initialize WebDriver for Selenium
 def init_driver():
     options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-software-rasterizer")
