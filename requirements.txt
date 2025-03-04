@@ -1,0 +1,7 @@
+aiohttp
+asyncio
+beautifulsoup4
+nest_asyncio
+selenium
+webdriver-manager
+requests
