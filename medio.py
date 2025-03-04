@@ -16,11 +16,11 @@ import random
 # Initialize WebDriver for Selenium
 def init_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--disable-extensions")
     options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--log-level=1")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-ipc-flooding-protection")
     service = Service(executable_path='/usr/local/bin/chromedriver')  # No need to specify the path
     return webdriver.Chrome(service=service, options=options)
 
