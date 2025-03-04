@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import random
 
 # Initialize WebDriver for Selenium
 def init_driver():
@@ -86,7 +87,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
             num = 20 * i
             page_url = f"https://www.medigoapp.com{pharmacy_link}?from={num}" if i > 0 else f"https://www.medigoapp.com{pharmacy_link}"
             driver.get(page_url)
-            await asyncio.sleep(5)  # Wait for content to load
+            await asyncio.sleep(random.uniform(5, 10))  # Wait for content to load
             pharmacy_soup = BeautifulSoup(driver.page_source, 'html.parser')
 
             pharmacy_items = pharmacy_soup.find_all('div', class_='grid-products-item cursor-pointer px-1 pb-2 pb-md-0 px-md-2')
@@ -106,7 +107,9 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                     continue
 
                 driver.get(f"https://www.medigoapp.com{product_link}")
-                await asyncio.sleep(5)  # Wait for product page to load
+                await WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "d-none d-md-flex d-lg-flex"))
+                )
                 product_soup = BeautifulSoup(driver.page_source, 'html.parser')
                 product_image_div = product_soup.find('div', class_='d-none d-md-flex d-lg-flex')
                 product_info_div = product_soup.find('table')
@@ -123,7 +126,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                 product = {
                     "pharmacy_name": pharmacy_name,
                     "medicine_name": medicine_name,
-                    "images": [img.get('src') for img in product_image_div.find_all('img') ],
+                    "images": [img.get('src') for img in product_image_div.find_all('img')] if product_image_div else [],
                     "medicine_info": medicine_info,
                     "medicine_description": str(product_soup.find('div', class_='col-sm-12 entry-content py-0'))
                 }
