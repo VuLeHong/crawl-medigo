@@ -12,6 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import random
+import tempfile
+import os
 
 # Initialize WebDriver for Selenium
 def init_driver():
@@ -21,6 +23,8 @@ def init_driver():
     options.add_argument("--disable-software-rasterizer")
     options.add_argument("--disable-background-networking")
     options.add_argument("--disable-ipc-flooding-protection")
+    user_data_dir = tempfile.mkdtemp()
+    options.add_argument(f"--user-data-dir={user_data_dir}")
     service = Service(executable_path='/usr/local/bin/chromedriver')  # No need to specify the path
     return webdriver.Chrome(service=service, options=options)
 
@@ -143,6 +147,8 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
         print(f"Error scraping {pharmacy_name}: {e}")
     finally:
         driver.quit()
+        os.system("pkill -9 chrome")
+        os.system("pkill -9 chromedriver")
 
     return scraped_products
 
