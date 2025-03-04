@@ -14,19 +14,18 @@ from webdriver_manager.chrome import ChromeDriverManager
 import random
 import tempfile
 import os
+import requests
 
 # Initialize WebDriver for Selenium
 def init_driver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    options.add_argument("--disable-extensions")
+    options.add_argument("--headless")  # Run in headless mode
     options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--disable-background-networking")
-    options.add_argument("--disable-ipc-flooding-protection")
-    user_data_dir = tempfile.mkdtemp()
-    options.add_argument(f"--user-data-dir={user_data_dir}")
-    service = Service(executable_path='/usr/local/bin/chromedriver')  # No need to specify the path
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    service = Service(executable_path='D:\Pythons\Python3.12\Lib\site-packages\selenium\webdriver\chrome\chromedriver.exe') 
+    # D:\Pythons\Python3.12\Lib\site-packages\selenium\webdriver\chrome\chromedriver.exe
+    # /usr/local/bin/chromedriver
     return webdriver.Chrome(service=service, options=options)
 
 # Function to clean text
@@ -45,15 +44,7 @@ def load_existing_products():
         return []
 
 # Save products to JSON
-def append_to_json(product):
-    try:
-        with open("medigo_product.json", "r", encoding="utf-8") as f:
-            products = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        products = []
-    
-    products.append(product)
-    
+def save_to_json(products):
     with open("medigo_product.json", "w", encoding="utf-8") as f:
         json.dump(products, f, ensure_ascii=False, indent=4)
 
@@ -102,6 +93,9 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
             for item in pharmacy_items:
                 product_div = item.find('a')
                 product_link = product_div.get('href')
+                match = re.search(r'pharmacyId=(\d+)', product_link)
+                if match:
+                    pharmacy_id = int(match.group(1))
                 if not product_link:
                     continue
 
@@ -112,9 +106,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                     continue
 
                 driver.get(f"https://www.medigoapp.com{product_link}")
-                await WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "d-none d-md-flex d-lg-flex"))
-                )
+                await asyncio.sleep(random.uniform(5, 10))
                 product_soup = BeautifulSoup(driver.page_source, 'html.parser')
                 product_image_div = product_soup.find('div', class_='d-none d-md-flex d-lg-flex')
                 product_info_div = product_soup.find('table')
@@ -127,16 +119,76 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                             product_info_key = product_info_cate[0].text.strip()
                             product_info_value = product_info_cate[1].text.strip()
                             medicine_info[product_info_key] = product_info_value
+                script = product_soup.find('script', id="__NEXT_DATA__").text
+                parsed_data = json.loads(script)
+                json_div = json.loads(parsed_data["props"]["pageProps"]["product"])
+                product_id = json_div["mId"]
+                url = "https://production-api.medigoapp.com/es/pharmacy-inventory/item"
+                headers = {
+                            "accept": "application/json, text/plain, */*",
+                            "accept-language": "en-US,en;q=0.6",
+                            "content-type": "application/json",
+                            "origin": "https://www.medigoapp.com",
+                            "priority": "u=1, i",
+                            "referer": "https://www.medigoapp.com/",
+                            "sec-ch-ua": '"Not(A:Brand";v="99", "Brave";v="133", "Chromium";v="133")',
+                            "sec-ch-ua-mobile": "?0",
+                            "sec-ch-ua-platform": '"Windows"',
+                            "sec-fetch-dest": "empty",
+                            "sec-fetch-mode": "cors",
+                            "sec-fetch-site": "same-site",
+                            "sec-gpc": "1",
+                            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+                        }
+                data = {
+                        "pharmacyId": pharmacy_id,
+                        "productId": product_id,
+                        "location": {
+                            "lat": 10.79426667238426,
+                            "lon": 106.6988930691023
+                                }
+                        }
+                response = requests.post(url, headers=headers, json=data)
+                if(response.status_code != 200):
+                    print("Error")
+                    print(medicine_name)
+                else:
+                    info = response.json()
+                    package_info = info['_source']['mProduct']['dong_goi']
+                    money_info = info['_source']['mData']
+                    money_info_map = {item["mPackageId"]: item["mPrice"] for item in money_info}
+                    price_package = []
+                for package in package_info:
+                    package_id = package["id"]
+                    if package_id in money_info_map:
+                        price = f"{money_info_map[package_id]:,} đ".replace(",", ".")
+                        name = f"{package['loai_dong_goi']['name'].capitalize()} {package['so_luong']} {package['don_vi']['name']}"
+                        price_package.append({"name": name, "price": price})
+                        rating_div = product_soup.find('div', class_='d-flex flex-wrap mt-4 w-100')
+                        star_rating = {}
+                        if rating_div:
+                            average_div = rating_div.find('div', class_='d-flex flex-column mr-4')
+                            average = average_div.find('p').text
+                            stars_div = rating_div.find('div', class_='w-100')
+                            star_div = stars_div.find_all('div', class_='d-flex align-items-center mb-3')
+                            star_rating['average'] = average
+                            s = 5
+                            for star in star_div:
+                                star_number = star.find('b').text
+                                star_rating[str(s)+' star'] = star_number
+                                s -= 1
                 # Extract product information
                 product = {
                     "pharmacy_name": pharmacy_name,
                     "medicine_name": medicine_name,
                     "images": [img.get('src') for img in product_image_div.find_all('img')] if product_image_div else [],
                     "medicine_info": medicine_info,
-                    "medicine_description": str(product_soup.find('div', class_='col-sm-12 entry-content py-0'))
+                    "medicine_description": str(product_soup.find('div', class_='col-sm-12 entry-content py-0')),
+                    "price_package": price_package,
+                    "star_rating": star_rating
                 }
                 # Append new product
-                append_to_json(product)
+                scraped_products.append(product)
                 count += 1
                 print(num)
                 print(count)
@@ -148,9 +200,6 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
         print(f"Error scraping {pharmacy_name}: {e}")
     finally:
         driver.quit()
-        os.system("pkill -9 chrome")
-        os.system("pkill -9 chromedriver")
-
     return scraped_products
 
 # Asynchronous main function
@@ -162,7 +211,7 @@ async def main():
     print("Scraping pharmacy list...")
     pharmacy_list = await scrape_pharmacy_list()
     
-    # Save pharmacy list to JSON
+        # Save pharmacy list to JSON
     with open("medigo_pharmacy.json", "w", encoding="utf-8") as f:
         json.dump(pharmacy_list, f, ensure_ascii=False, indent=4)
 
@@ -175,7 +224,13 @@ async def main():
         tasks = [scrape_pharmacy_products(pharmacy, existing_products) for pharmacy in batch]
         results = await asyncio.gather(*tasks)
 
-    
+        # Flatten the list of new scraped products
+        new_products = [product for sublist in results for product in sublist]
+
+        # Append only new products to the existing list
+        if new_products:
+            existing_products.extend(new_products)
+            save_to_json(existing_products)  # Save after every batch
 
 # Run the async program
 if __name__ == "__main__":
