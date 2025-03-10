@@ -37,7 +37,7 @@ def clean_string(text):
 
 def add_error_product( pharmacy_name, medicine_name, error):
     try:
-        with open("medigo_error_product.json", "r", encoding="utf-8") as f:
+        with open("medigo_error_product2.json", "r", encoding="utf-8") as f:
             error_products =  json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         error_products = []
@@ -199,7 +199,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                                 star_rating[str(s)+' star'] = star_number
                                 s -= 1
                 if images == []:
-                    add_error_product(pharmacy_name, medicine_name, "No images")
+                    add_error_product(pharmacy_name, medicine_name, product_link, pharmacy_id,"No images")
                     print(f"Error scraping {pharmacy_name}: No images")
                     continue
                 # Extract product information
