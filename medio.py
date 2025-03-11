@@ -23,7 +23,7 @@ def init_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    service = Service(executable_path='D:\Pythons\Python3.12\Lib\site-packages\selenium\webdriver\chrome\chromedriver.exe') 
+    service = Service(executable_path='/usr/local/bin/chromedriver') 
     # D:\Pythons\Python3.12\Lib\site-packages\selenium\webdriver\chrome\chromedriver.exe
     # /usr/local/bin/chromedriver
     return webdriver.Chrome(service=service, options=options)
