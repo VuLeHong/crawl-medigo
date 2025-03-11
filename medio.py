@@ -23,7 +23,7 @@ def init_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    service = Service(executable_path='/usr/local/bin/chromedriver') 
+    service = Service(executable_path='D:\Pythons\Python3.12\Lib\site-packages\selenium\webdriver\chrome\chromedriver.exe') 
     # D:\Pythons\Python3.12\Lib\site-packages\selenium\webdriver\chrome\chromedriver.exe
     # /usr/local/bin/chromedriver
     return webdriver.Chrome(service=service, options=options)
@@ -35,7 +35,7 @@ def clean_string(text):
     text = re.sub(r' +', ' ', text)
     return "\n".join(line.strip() for line in text.split("\n")).strip()
 
-def add_error_product( pharmacy_name, medicine_name, error):
+def add_error_product( pharmacy_name, medicine_name, product_link,pharmacy_id, error, ):
     try:
         with open("medigo_error_product2.json", "r", encoding="utf-8") as f:
             error_products =  json.load(f)
@@ -45,6 +45,8 @@ def add_error_product( pharmacy_name, medicine_name, error):
     error_products.append({
         "pharmacy_name": pharmacy_name,
         "medicine_name": medicine_name,
+        "medicine_link": product_link,
+        "medicine_id": pharmacy_id,
         "error": error
     })
     
@@ -222,7 +224,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                 print('-------------------------------------------------')
 
     except Exception as e:
-        add_error_product(pharmacy_name, medicine_name, str(e))
+        add_error_product(pharmacy_name, medicine_name, product_link, pharmacy_id,str(e))
         print(f"Error scraping {pharmacy_name}: {e}")
         
     finally:
