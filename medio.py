@@ -35,7 +35,7 @@ def clean_string(text):
     text = re.sub(r' +', ' ', text)
     return "\n".join(line.strip() for line in text.split("\n")).strip()
 
-def add_error_product( pharmacy_name, medicine_name, product_link,pharmacy_id, error, ):
+def add_error_product( pharmacy_name, medicine_name, product_link, pharmacy_id, error, ):
     try:
         with open("medigo_error_product2.json", "r", encoding="utf-8") as f:
             error_products =  json.load(f)
@@ -224,7 +224,7 @@ async def scrape_pharmacy_products(pharmacy, existing_products):
                 print('-------------------------------------------------')
 
     except Exception as e:
-        add_error_product(pharmacy_name, medicine_name, product_link, pharmacy_id,str(e))
+        add_error_product( pharmacy_name, medicine_name, product_link, pharmacy_id, str(e))
         print(f"Error scraping {pharmacy_name}: {e}")
         
     finally:
