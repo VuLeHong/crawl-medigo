@@ -50,7 +50,7 @@ def add_error_product( pharmacy_name, medicine_name, product_link, pharmacy_id, 
         "error": error
     })
     
-    with open("medigo_error_product.json", "w", encoding="utf-8") as f:
+    with open("medigo_error_product2.json", "w", encoding="utf-8") as f:
         json.dump(error_products, f, ensure_ascii=False, indent=4)
     
 
