@@ -245,10 +245,10 @@ async def main():
         json.dump(pharmacy_list, f, ensure_ascii=False, indent=4)
 
     # Step 2: Scrape product details in batches of 3 pharmacies
-    print("Scraping pharmacy products in batches of 10...")
+    print("Scraping pharmacy products in batches of 20...")
 
     error_products = []
-    batch_size = 10
+    batch_size = 20
     for i in range(0, len(pharmacy_list), batch_size):
         batch = pharmacy_list[i:i + batch_size]
         tasks = [scrape_pharmacy_products(pharmacy, existing_products) for pharmacy in batch]
