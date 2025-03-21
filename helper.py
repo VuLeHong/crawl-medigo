@@ -86,7 +86,6 @@ async def fetch(session, url):
 
 # Function to scrape products using Selenium
 async def scrape_pharmacy_products(error_product, existing_products):
-    print("Scraping pharmacy")
     pharmacy_name = error_product["pharmacy_name"]
     medicine_link = error_product["medicine_link"]
     pharmacy_id = error_product["medicine_id"]
