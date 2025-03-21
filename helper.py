@@ -37,7 +37,7 @@ def clean_string(text):
 
 def add_error_product( pharmacy_name, medicine_name, product_link, pharmacy_id, error, ):
     try:
-        with open("medigo_error_product_extra.json", "r", encoding="utf-8") as f:
+        with open("medigo_error_product2.json", "r", encoding="utf-8") as f:
             error_products =  json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         error_products = []
@@ -50,13 +50,13 @@ def add_error_product( pharmacy_name, medicine_name, product_link, pharmacy_id, 
         "error": error
     })
     
-    with open("medigo_error_product_extra.json", "w", encoding="utf-8") as f:
+    with open("medigo_error_product2.json", "w", encoding="utf-8") as f:
         json.dump(error_products, f, ensure_ascii=False, indent=4)
     
 
 def load_error_products():
     try:
-        with open("medigo_error_product2.json", "r", encoding="utf-8") as f:
+        with open("medigo_error_product_extra.json", "r", encoding="utf-8") as f:
             data = json.load(f)
             print(f"Loaded {len(data)} error products")
             return data
